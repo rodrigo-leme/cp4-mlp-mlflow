@@ -1,0 +1,5 @@
+pandas
+scikit-learn
+mlflow>=3.0
+fastapi
+uvicorn
