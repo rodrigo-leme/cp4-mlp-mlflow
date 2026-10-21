@@ -28,6 +28,7 @@ cp4-mlp-mlflow/
 ├── preprocessamento.py    # carga, split treino/teste e pré-processamento
 ├── treino.py              # treina os MLPs, registra no MLflow e registra o melhor modelo
 ├── api.py                 # API FastAPI que carrega o modelo do MLflow
+├── prints/                # evidências (treino, MLflow e API)
 ├── requirements.txt
 └── README.md
 ```
@@ -61,13 +62,15 @@ Em cada run o MLflow registra:
 
 Ao final, o run com **maior F1-score** é registrado no Model Registry do MLflow com o nome `titanic-mlp`.
 
+![Saída do treino](prints/01_treino_terminal.png)
+
 ## Como executar
 
 ### 1. Instalar dependências
 ```bash
 python -m venv venv
 # Windows: venv\Scripts\activate | Linux/Mac: source venv/bin/activate
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
 ```
 
 ### 2. Treinar e registrar os experimentos
@@ -78,15 +81,16 @@ Cria o `mlflow.db` (registros) e a pasta `mlruns/` (artifacts/modelos).
 
 ### 3. Abrir a interface do MLflow
 ```bash
-mlflow ui --backend-store-uri sqlite:///mlflow.db
+python -m mlflow ui --backend-store-uri sqlite:///mlflow.db
 ```
 Acesse http://127.0.0.1:5000 → experimento **titanic-mlp** → selecione os runs → **Compare**.
 O modelo final aparece em **Models → titanic-mlp**.
 
 ### 4. Subir a API
 ```bash
-uvicorn api:app --reload
+python -m uvicorn api:app --reload
 ```
+> Use um segundo terminal, já que o MLflow UI fica rodando no primeiro.
 Teste em http://127.0.0.1:8000/docs (Swagger) → `POST /predict` → **Try it out**.
 
 Ou via terminal:
@@ -110,6 +114,7 @@ curl -X POST http://127.0.0.1:8000/predict -H "Content-Type: application/json" -
 ```json
 { "prediction": 1 }
 ```
+`1` = sobreviveu · `0` = não sobreviveu
 
 ## Resultados
 
@@ -122,6 +127,31 @@ curl -X POST http://127.0.0.1:8000/predict -H "Content-Type: application/json" -
 | MLP-07 | 0.8045 | 0.8400 | 0.6087 | 0.7059 |
 | MLP-04 | 0.7933 | 0.7963 | 0.6232 | 0.6992 |
 | MLP-01 | 0.7821 | 0.7679 | 0.6232 | 0.6880 |
+
+## Evidências
+
+### MLflow — runs do experimento
+![Runs no MLflow](prints/02_mlflow_runs.png)
+
+### MLflow — comparação dos experimentos
+![Gráfico de comparação](prints/03_mlflow_compare.png)
+
+![Tabela de parâmetros e métricas](prints/03b_mlflow_compare_tabela.png)
+
+### MLflow — melhor modelo (MLP-02)
+![Melhor run](prints/04_mlflow_melhor_run.png)
+
+### MLflow — Model Registry
+![Model Registry](prints/05_mlflow_model_registry.png)
+
+### API — Swagger
+![Swagger da API](prints/06_api_swagger.png)
+
+### API — predição: sobreviveu (1)
+![Predição 1](prints/07_api_predicao_sobreviveu.png)
+
+### API — predição: não sobreviveu (0)
+![Predição 0](prints/08_api_predicao_nao_sobreviveu.png)
 
 ## Por que o MLP-02 é o melhor modelo?
 O dataset é **desbalanceado** (62% não sobreviveram, 38% sobreviveram). Por isso a métrica principal escolhida foi o **F1-score**, que equilibra precision (acertar quando diz "sobreviveu") e recall (encontrar quem realmente sobreviveu) — a accuracy sozinha poderia esconder um modelo que erra muito a classe minoritária.
